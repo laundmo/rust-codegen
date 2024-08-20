@@ -7,6 +7,7 @@ use crate::function::Function;
 use crate::type_def::TypeDef;
 
 use crate::r#type::Type;
+use crate::FormatCode;
 
 /// Defines a trait.
 #[allow(dead_code)]
@@ -214,6 +215,7 @@ impl Trait {
     pub fn new_fn(&mut self, name: &str) -> &mut Function {
         let mut func = Function::new(name);
         func.body = None;
+        func.set_trait();
 
         self.push_fn(func);
         self.fns.last_mut().unwrap()
@@ -235,11 +237,13 @@ impl Trait {
     ///
     /// foo_trait.push_fn(bar_fn);
     /// ```
-    pub fn push_fn(&mut self, item: Function) -> &mut Self {
+    pub fn push_fn(&mut self, mut item: Function) -> &mut Self {
+        item.set_trait();
         self.fns.push(item);
         self
     }
-
+}
+impl FormatCode for Trait {
     /// Formats the scope using the given formatter.
     ///
     /// # Arguments
@@ -249,15 +253,15 @@ impl Trait {
     /// # Examples
     ///
     /// ```
-    /// use rust_codegen::{Formatter,Trait};
+    /// use rust_codegen::*;
     ///
     /// let mut dest = String::new();
     /// let mut fmt = Formatter::new(&mut dest);
     ///
     /// let mut foo_trait = Trait::new("Foo");
-    /// foo_trait.fmt(&mut fmt);
+    /// foo_trait.fmt_code(&mut fmt);
     /// ```
-    pub fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt_code(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
         self.type_def.fmt_head("trait", &self.parents, fmt)?;
 
         fmt.block(|fmt| {
@@ -284,7 +288,7 @@ impl Trait {
                     writeln!(fmt)?;
                 }
 
-                func.fmt(true, fmt)?;
+                func.fmt_code(fmt)?;
             }
 
             Ok(())

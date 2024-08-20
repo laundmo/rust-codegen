@@ -1,6 +1,6 @@
 use std::fmt::{self, Write};
 
-use crate::formatter::Formatter;
+use crate::{formatter::Formatter, FormatCode};
 
 /// Defines a type.
 #[derive(Debug, Clone)]
@@ -56,24 +56,6 @@ impl Type {
         self.generics.push(ty.into());
         self
     }
-
-    /// Formats the struct using the given formatter.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use rust_codegen::{Formatter,Type};
-    ///
-    /// let mut dest = String::new();
-    /// let mut fmt = Formatter::new(&mut dest);
-    ///
-    /// let mut foo_type = Type::new("Foo");
-    /// foo_type.fmt(&mut fmt);
-    pub fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
-        write!(fmt, "{}", self.name)?;
-        Type::fmt_slice(&self.generics, fmt)
-    }
-
     /// Formats the type using the given formatter with the given generics.
     ///
     /// # Arguments
@@ -88,13 +70,32 @@ impl Type {
                 if i != 0 {
                     write!(fmt, ", ")?
                 }
-                ty.fmt(fmt)?;
+                ty.fmt_code(fmt)?;
             }
 
             write!(fmt, ">")?;
         }
 
         Ok(())
+    }
+}
+
+impl FormatCode for Type {
+    /// Formats the struct using the given formatter.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rust_codegen::*;
+    ///
+    /// let mut dest = String::new();
+    /// let mut fmt = Formatter::new(&mut dest);
+    ///
+    /// let mut foo_type = Type::new("Foo");
+    /// foo_type.fmt_code(&mut fmt);
+    fn fmt_code(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
+        write!(fmt, "{}", self.name)?;
+        Type::fmt_slice(&self.generics, fmt)
     }
 }
 

@@ -5,6 +5,7 @@ use crate::docs::Docs;
 use crate::formatter::{fmt_bounds, Formatter};
 
 use crate::r#type::Type;
+use crate::FormatCode;
 
 /// Defines a type definition.
 #[derive(Debug, Clone)]
@@ -127,7 +128,7 @@ impl TypeDef {
         fmt: &mut Formatter<'_>,
     ) -> fmt::Result {
         if let Some(ref docs) = self.docs {
-            docs.fmt(fmt)?;
+            docs.fmt_code(fmt)?;
         }
 
         self.fmt_allow(fmt)?;
@@ -140,7 +141,7 @@ impl TypeDef {
         }
 
         write!(fmt, "{} ", keyword)?;
-        self.ty.fmt(fmt)?;
+        self.ty.fmt_code(fmt)?;
 
         if !parents.is_empty() {
             for (i, ty) in parents.iter().enumerate() {
@@ -150,7 +151,7 @@ impl TypeDef {
                     write!(fmt, " + ")?;
                 }
 
-                ty.fmt(fmt)?;
+                ty.fmt_code(fmt)?;
             }
         }
 

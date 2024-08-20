@@ -6,6 +6,7 @@ use crate::formatter::{fmt_bounds, fmt_generics, Formatter};
 use crate::function::Function;
 
 use crate::r#type::Type;
+use crate::FormatCode;
 
 /// Defines an impl block.
 #[derive(Debug, Clone)]
@@ -220,7 +221,8 @@ impl Impl {
         self.fns.push(item);
         self
     }
-
+}
+impl FormatCode for Impl {
     /// Formats the impl block using the given formatter.
     ///
     /// # Arguments
@@ -236,9 +238,9 @@ impl Impl {
     /// let mut fmt = Formatter::new(&mut dest);
     ///
     /// let mut foo_impl = Impl::new("Foo");
-    /// foo_impl.fmt( &mut fmt);
+    /// foo_impl.fmt_code(&mut fmt);
     /// ```
-    pub fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt_code(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
         for m in self.macros.iter() {
             writeln!(fmt, "{}", m)?;
         }
@@ -247,12 +249,12 @@ impl Impl {
 
         if let Some(ref t) = self.impl_trait {
             write!(fmt, " ")?;
-            t.fmt(fmt)?;
+            t.fmt_code(fmt)?;
             write!(fmt, " for")?;
         }
 
         write!(fmt, " ")?;
-        self.target.fmt(fmt)?;
+        self.target.fmt_code(fmt)?;
 
         fmt_bounds(&self.bounds, fmt)?;
 
@@ -261,7 +263,7 @@ impl Impl {
             if !self.assoc_tys.is_empty() {
                 for ty in &self.assoc_tys {
                     write!(fmt, "type {} = ", ty.name)?;
-                    ty.ty.fmt(fmt)?;
+                    ty.ty.fmt_code(fmt)?;
                     writeln!(fmt, ";")?;
                 }
             }
@@ -271,7 +273,7 @@ impl Impl {
                     writeln!(fmt)?;
                 }
 
-                func.fmt(false, fmt)?;
+                func.fmt_code(fmt)?;
             }
 
             Ok(())

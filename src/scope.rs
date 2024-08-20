@@ -13,6 +13,7 @@ use crate::r#enum::Enum;
 use crate::r#impl::Impl;
 use crate::r#struct::Struct;
 use crate::r#trait::Trait;
+use crate::FormatCode;
 
 /// Defines a scope.
 ///
@@ -224,50 +225,6 @@ impl Scope {
         self
     }
 
-    /// Return a string representation of the scope.
-    #[allow(clippy::inherent_to_string)]
-    pub fn to_string(&self) -> String {
-        let mut ret = String::new();
-
-        self.fmt(&mut Formatter::new(&mut ret)).unwrap();
-
-        // Remove the trailing newline
-        if ret.as_bytes().last() == Some(&b'\n') {
-            ret.pop();
-        }
-
-        ret
-    }
-
-    /// Formats the scope using the given formatter.
-    pub fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
-        self.fmt_imports(fmt)?;
-
-        if !self.imports.is_empty() {
-            writeln!(fmt)?;
-        }
-
-        for (i, item) in self.items.iter().enumerate() {
-            if i != 0 {
-                writeln!(fmt)?;
-            }
-
-            match *item {
-                Item::Module(ref v) => v.fmt(fmt)?,
-                Item::Struct(ref v) => v.fmt(fmt)?,
-                Item::Function(ref v) => v.fmt(false, fmt)?,
-                Item::Trait(ref v) => v.fmt(fmt)?,
-                Item::Enum(ref v) => v.fmt(fmt)?,
-                Item::Impl(ref v) => v.fmt(fmt)?,
-                Item::Raw(ref v) => {
-                    writeln!(fmt, "{}", v)?;
-                }
-            }
-        }
-
-        Ok(())
-    }
-
     fn fmt_imports(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
         // First, collect all visibilities
         let mut visibilities = vec![];
@@ -316,6 +273,26 @@ impl Scope {
                     }
                 }
             }
+        }
+
+        Ok(())
+    }
+}
+
+impl FormatCode for Scope {
+    /// Formats the scope using the given formatter.
+    fn fmt_code(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
+        self.fmt_imports(fmt)?;
+
+        if !self.imports.is_empty() {
+            writeln!(fmt)?;
+        }
+
+        for (i, item) in self.items.iter().enumerate() {
+            if i != 0 {
+                writeln!(fmt)?;
+            }
+            item.fmt_code(fmt)?;
         }
 
         Ok(())

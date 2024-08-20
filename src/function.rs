@@ -9,6 +9,7 @@ use crate::formatter::Formatter;
 use crate::formatter::{fmt_bounds, fmt_generics};
 
 use crate::r#type::Type;
+use crate::FormatCode;
 
 /// Defines a function.
 #[derive(Debug, Clone)]
@@ -39,6 +40,8 @@ pub struct Function {
     extern_abi: Option<String>,
     /// Whether or not this function is `async` or not.
     r#async: bool,
+    /// Whether or not this function is in a Trait.
+    is_trait: bool,
 }
 
 impl Function {
@@ -70,6 +73,7 @@ impl Function {
             attributes: vec![],
             extern_abi: None,
             r#async: false,
+            is_trait: false,
         }
     }
 
@@ -126,6 +130,7 @@ impl Function {
     /// foo_fn.vis("pub");
     /// ```
     pub fn vis(&mut self, vis: &str) -> &mut Self {
+        assert!(!self.is_trait, "trait fns do not have visibility modifiers");
         self.vis = Some(vis.to_string());
         self
     }
@@ -368,6 +373,17 @@ impl Function {
         self
     }
 
+    /// Sets the Trait flag for this Function and clears its visibility
+    ///
+    /// This is only used internally.
+    pub(crate) fn set_trait(&mut self) -> &mut Self {
+        self.is_trait = true;
+        self.vis = None;
+        self
+    }
+}
+
+impl FormatCode for Function {
     /// Formats the function using the given formatter.
     ///
     /// # Arguments
@@ -384,11 +400,11 @@ impl Function {
     /// let mut fmt = Formatter::new(&mut dest);
     ///
     /// let mut foo_fn = Function::new("foo_fn");
-    /// foo_fn.fmt(false, &mut fmt);
+    /// foo_fn.fmt_code(&mut fmt);
     /// ```
-    pub fn fmt(&self, is_trait: bool, fmt: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt_code(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
         if let Some(ref docs) = self.docs {
-            docs.fmt(fmt)?;
+            docs.fmt_code(fmt)?;
         }
 
         if let Some(ref allow) = self.allow {
@@ -397,13 +413,6 @@ impl Function {
 
         for attr in self.attributes.iter() {
             writeln!(fmt, "#[{}]", attr)?;
-        }
-
-        if is_trait {
-            assert!(
-                self.vis.is_none(),
-                "trait fns do not have visibility modifiers"
-            );
         }
 
         if let Some(ref vis) = self.vis {
@@ -433,14 +442,14 @@ impl Function {
             }
 
             write!(fmt, "{}: ", arg.name)?;
-            arg.ty.fmt(fmt)?;
+            arg.ty.fmt_code(fmt)?;
         }
 
         write!(fmt, ")")?;
 
         if let Some(ref ret) = self.ret {
             write!(fmt, " -> ")?;
-            ret.fmt(fmt)?;
+            ret.fmt_code(fmt)?;
         }
 
         fmt_bounds(&self.bounds, fmt)?;
@@ -448,13 +457,13 @@ impl Function {
         match self.body {
             Some(ref body) => fmt.block(|fmt| {
                 for b in body {
-                    b.fmt(fmt)?;
+                    b.fmt_code(fmt)?;
                 }
 
                 Ok(())
             }),
             None => {
-                if !is_trait {
+                if !self.is_trait {
                     panic!("impl blocks must define fn bodies");
                 }
 

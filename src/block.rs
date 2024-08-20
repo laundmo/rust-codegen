@@ -2,6 +2,7 @@ use std::fmt::{self, Write};
 
 use crate::body::Body;
 use crate::formatter::Formatter;
+use crate::FormatCode;
 
 /// Defines a code block. This is used to define a function body.
 #[derive(Debug, Clone)]
@@ -97,7 +98,8 @@ impl Block {
         self.after = Some(after.to_string());
         self
     }
-
+}
+impl FormatCode for Block {
     /// Formats the block using the given formatter.
     ///
     /// # Arguments
@@ -107,15 +109,15 @@ impl Block {
     /// # Examples
     ///
     /// ```
-    /// use rust_codegen::{Block, Formatter};
+    /// use rust_codegen::*;
     ///
     /// let mut dest = String::new();
     /// let mut fmt = Formatter::new(&mut dest);
     ///
     /// let mut block = Block::new("This is before");
-    /// block.fmt(&mut fmt);
+    /// block.fmt_code(&mut fmt);
     /// ```
-    pub fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt_code(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
         if let Some(ref before) = self.before {
             write!(fmt, "{}", before)?;
         }
@@ -130,7 +132,7 @@ impl Block {
 
         fmt.indent(|fmt| {
             for b in &self.body {
-                b.fmt(fmt)?;
+                b.fmt_code(fmt)?;
             }
 
             Ok(())

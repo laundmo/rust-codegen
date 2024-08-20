@@ -4,6 +4,7 @@ use crate::fields::Fields;
 use crate::formatter::Formatter;
 
 use crate::r#type::Type;
+use crate::FormatCode;
 
 /// Defines an enum variant.
 #[derive(Debug, Clone)]
@@ -73,7 +74,9 @@ impl Variant {
         self.fields.tuple(ty);
         self
     }
+}
 
+impl FormatCode for Variant {
     /// Formats the variant using the given formatter.
     ///
     /// # Arguments
@@ -83,17 +86,17 @@ impl Variant {
     /// # Examples
     ///
     /// ```
-    /// use rust_codegen::{Formatter,Variant};
+    /// use rust_codegen::*;
     ///
     /// let mut dest = String::new();
     /// let mut fmt = Formatter::new(&mut dest);
     ///
     /// let mut foo_variant = Variant::new("Foo");
-    /// foo_variant.fmt(&mut fmt);
+    /// foo_variant.fmt_code(&mut fmt);
     /// ```
-    pub fn fmt(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt_code(&self, fmt: &mut Formatter<'_>) -> fmt::Result {
         write!(fmt, "{}", self.name)?;
-        self.fields.fmt(fmt)?;
+        self.fields.fmt_code(fmt)?;
         writeln!(fmt, ",")?;
 
         Ok(())
