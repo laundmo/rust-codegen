@@ -377,8 +377,12 @@ impl Function {
     ///
     /// This is only used internally.
     pub(crate) fn set_trait(&mut self) -> &mut Self {
+        assert!(
+            self.vis.is_none(),
+            "trait fns do not have visibility modifiers"
+        );
+
         self.is_trait = true;
-        self.vis = None;
         self
     }
 }
